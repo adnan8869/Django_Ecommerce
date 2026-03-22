@@ -1,10 +1,20 @@
 {% extends "base.html" %}
-
 {% block content %}
-    <!-- Section-->
-    <div class="container">
+        <!-- Header-->
+        <header class="bg-dark py-5">
+            <div class="container px-4 px-lg-5 my-5">
+                <div class="text-center text-white">
+                    <h1 class="display-4 fw-bolder">Shopping Cart</h1>
+                    <p class="lead fw-normal text-white-50 mb-0">Review your items before checkout</p>
+                </div>
+            </div>
+        </header>
         <br/>
-        <div class="card mb-3">
+        <div class="container">
+        {% if cart_products %}
+            {% for product in  cart_products %}
+
+                    <div class="card mb-3">
   <div class="row g-0">
     <div class="col-md-4">
       <img src="{{ product.image.url }}" class="img-fluid rounded-start" alt="...">
@@ -33,6 +43,13 @@
             <div class="col-md-2">Quantity:</div>
             <div class="col-md-2">
         <select class="form-select form-select-sm" id="qty-card">
+        
+            {%for key,value in quantities.items %}
+                {% if key == product.id|slugify%}
+                    <option selected>{{ value }}</option>
+                {% endif %}
+            {% endfor %}
+        
         <option value="1">1</option>
         <option value="2">2</option>
         <option value="3">3</option>
@@ -44,41 +61,18 @@
 
         <br/><br/>
         <a class="btn btn-secondary" href="{% url 'home' %}">Home</a>
-        <button class="btn btn-primary" type='button' id="add-to-cart" value="{{ product.id }}">Add to Cart</button>
         <center/>
     </div>
       </div>
     </div>
-  </div>
-</div>
-    </div>
+  </div><br/>
 
+            {% endfor %}
+        {% else %}
+            <h3>Your cart is empty.</h3>
+            <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+        {% endif %}
+        <div/>
 
-    <br/><br/><br/><br/><br/><br/><br/>
-
-
-<script>
-$(document).on('click', '#add-to-cart', function(e) {
-    e.preventDefault();
-    $.ajax({
-        url: "{% url 'cart_add' %}",
-        type: "POST",
-        data: {
-            'product_id': $('#add-to-cart').val(),
-            'quantity_qty': $('#qty-card option:selected').text(),
-            'action': 'post',
-            'csrfmiddlewaretoken': '{{ csrf_token }}'
-        },
-        success: function(json) {
-           // console.log(json);
-           document.getElementById("cart_quantity").textContent = json.Qty;
-           alert('Product added to cart successfully!');
-        },
-        error: function(xhr, errmsg, err) {
-            alert('Error adding product to cart.');
-        }
-    });
-    
-});
-</script>
-{% endblock %}
+        <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+        {% endblock %}
