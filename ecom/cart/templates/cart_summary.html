@@ -98,7 +98,6 @@ $(document).on('click', '.update-cart', function(e) {
             'csrfmiddlewaretoken': '{{ csrf_token }}'
         },
         success: function(json) {
-              alert('Cart updated successfully.');
               location.reload();
         },
         error: function(xhr, errmsg, err) {
@@ -122,7 +121,6 @@ $(document).on('click', '.delete-product', function(e) {
             'csrfmiddlewaretoken': '{{ csrf_token }}'
         },
         success: function(json) {
-              alert('Product removed from cart.');
               location.reload();
         },
         error: function(xhr, errmsg, err) {

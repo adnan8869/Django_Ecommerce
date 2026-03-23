@@ -72,10 +72,10 @@ $(document).on('click', '#add-to-cart', function(e) {
         success: function(json) {
            // console.log(json);
            document.getElementById("cart_quantity").textContent = json.Qty;
-           alert('Product added to cart successfully!');
+           location.reload();
         },
         error: function(xhr, errmsg, err) {
-            alert('Error adding product to cart.');
+           
         }
     });
     
