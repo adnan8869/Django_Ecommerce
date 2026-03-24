@@ -16,7 +16,7 @@
         <link href="{% static 'css/styles.css' %}" rel="stylesheet" />
         <script src="https://code.jquery.com/jquery-4.0.0.min.js" integrity="sha256-OaVG6prZf4v69dPg6PhVattBXkcOWQB62pdZ3ORyrao=" crossorigin="anonymous"></script>
     </head>
-    <body>
+    <body class="d-flex flex-column min-vh-100">
         {% include 'navbar.html' %}
 
         {% if messages %}
@@ -34,7 +34,7 @@
         {% endblock %}
 
         <!-- Footer-->
-        <footer class="py-5 bg-dark">
+        <footer class="mt-auto w-100 py-5 bg-dark">
             <div class="container"><p class="m-0 text-center text-white">Copyright &copy; Ecommerce Website 2026</p></div>
         </footer>
         <!-- Bootstrap core JS-->

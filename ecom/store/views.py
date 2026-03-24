@@ -1,12 +1,39 @@
 from django.shortcuts import render, redirect
-from .models import Product, Category
+from .models import Product, Category, Profile
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .forms import SignUpForm, UpdateUserForm, ChangePasswordForm
+from .forms import SignUpForm, UpdateUserForm, ChangePasswordForm, UserInfoForm
 from django import forms
+from django.db.models import Q
 
+
+
+def search(request):
+    if request.method == 'POST':
+        searched = request.POST['searched']
+        searched = Product.objects.filter(Q(name__icontains=searched) | Q(description__icontains=searched))
+        if not searched:
+            messages.error(request, 'No products found matching your search.')
+            return render(request, 'search.html', {})
+        else:
+            return render(request, 'search.html', {'searched': searched})
+    else:
+        return render(request, 'search.html', {})
+
+def update_info(request):
+    if request.user.is_authenticated:
+        current_user = Profile.objects.get(user__id=request.user.id)
+        form = UserInfoForm(request.POST or None, instance=current_user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your Info has been updated.')
+            return redirect('home')
+        return render(request, 'update_info.html', {'form': form})
+    else:
+        messages.error(request, 'You must be logged in to update your profile.')
+        return redirect('login')
 
 def update_password(request):
     if request.user.is_authenticated:
@@ -101,8 +128,8 @@ def register_user(request):
             password = form.cleaned_data['password1']
             user = authenticate(username=username, password=password)
             login(request, user)
-            messages.success(request, 'Registration successful.')
-            return redirect('home')
+            messages.success(request, 'User created, please fill your profile information.')
+            return redirect('update_info')
         else:
             messages.error(request, 'Unsuccessful registration. Invalid information.')
             return redirect('register')
