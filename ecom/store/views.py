@@ -7,13 +7,15 @@ from django.contrib.auth.forms import UserCreationForm
 from .forms import SignUpForm, UpdateUserForm, ChangePasswordForm, UserInfoForm
 from django import forms
 from django.db.models import Q
-
+import json
+from cart.cart import Cart
 
 
 def search(request):
     if request.method == 'POST':
         searched = request.POST['searched']
-        searched = Product.objects.filter(Q(name__icontains=searched) | Q(description__icontains=searched))
+        searched = Product.objects.filter(
+            Q(name__icontains=searched) | Q(description__icontains=searched))
         if not searched:
             messages.error(request, 'No products found matching your search.')
             return render(request, 'search.html', {})
@@ -21,6 +23,7 @@ def search(request):
             return render(request, 'search.html', {'searched': searched})
     else:
         return render(request, 'search.html', {})
+
 
 def update_info(request):
     if request.user.is_authenticated:
@@ -32,8 +35,11 @@ def update_info(request):
             return redirect('home')
         return render(request, 'update_info.html', {'form': form})
     else:
-        messages.error(request, 'You must be logged in to update your profile.')
+        messages.error(
+            request,
+            'You must be logged in to update your profile.')
         return redirect('login')
+
 
 def update_password(request):
     if request.user.is_authenticated:
@@ -53,9 +59,11 @@ def update_password(request):
             form = ChangePasswordForm(current_user)
             return render(request, 'update_password.html', {'form': form})
     else:
-        messages.error(request, 'You must be logged in to change your password.')
+        messages.error(
+            request,
+            'You must be logged in to change your password.')
         return redirect('login')
-          
+
 
 def update_user(request):
     if request.user.is_authenticated:
@@ -68,19 +76,24 @@ def update_user(request):
             return redirect('home')
         return render(request, 'update_user.html', {'user_form': user_form})
     else:
-        messages.error(request, 'You must be logged in to update your profile.')
+        messages.error(
+            request,
+            'You must be logged in to update your profile.')
         return redirect('login')
+
 
 def category_summary(request):
     category = Category.objects.all()
     return render(request, 'category_summary.html', {'categories': category})
+
 
 def category(request, foo):
     foo = foo.replace('-', ' ')
     try:
         category = Category.objects.get(name=foo)
         products = Product.objects.filter(category=category)
-        return render(request, 'category.html', {'category': category, 'products': products})
+        return render(request, 'category.html', {
+                      'category': category, 'products': products})
     except Category.DoesNotExist:
         messages.error(request, 'Category does not exist.')
         return redirect('home')
@@ -95,8 +108,10 @@ def home(request):
     products = Product.objects.all()
     return render(request, 'home.html', {'products': products})
 
+
 def about(request):
     return render(request, 'about.html', {})
+
 
 def login_user(request):
     if request.method == 'POST':
@@ -105,18 +120,30 @@ def login_user(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
+            # Update the user's cart with any saved items
+            current_user = Profile.objects.get(user__id=request.user.id)
+            saved_cart = current_user.old_cart
+            # Convert the saved cart string back to a dictionary
+            if saved_cart:
+                converted_cart = json.loads(saved_cart)
+                cart = Cart(request)
+                for key, value in converted_cart.items():
+                    cart.db_add(product=key, quantity=value)
+
             messages.success(request, 'You have been logged in.')
             return redirect('home')
         else:
             messages.error(request, 'Invalid username or password.')
             return redirect('login')
-    else:       
+    else:
         return render(request, 'login.html', {})
+
 
 def logout_user(request):
     logout(request)
     messages.success(request, 'You have been logged out.')
     return redirect('home')
+
 
 def register_user(request):
     form = SignUpForm()
@@ -128,10 +155,12 @@ def register_user(request):
             password = form.cleaned_data['password1']
             user = authenticate(username=username, password=password)
             login(request, user)
-            messages.success(request, 'User created, please fill your profile information.')
+            messages.success(
+                request, 'User created, please fill your profile information.')
             return redirect('update_info')
         else:
-            messages.error(request, 'Unsuccessful registration. Invalid information.')
+            messages.error(
+                request, 'Unsuccessful registration. Invalid information.')
             return redirect('register')
     else:
         return render(request, 'register.html', {'form': form})
