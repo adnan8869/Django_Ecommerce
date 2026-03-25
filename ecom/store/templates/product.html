@@ -1,60 +1,58 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <!-- Section-->
+  <section class="py-5">
     <div class="container">
-        <br/>
-        <div class="card mb-3">
-  <div class="row g-0">
-    <div class="col-md-4">
-      <img src="{{ product.image.url }}" class="img-fluid rounded-start" alt="...">
-    </div>
-    <div class="col-md-8">
-      <div class="card-body">
-        <center>
-        <h5 class="card-title">{{ product.name }}</h5>
-        <br/>
-        <p class="card-text">{{ product.description }}</p>
-        
-        {% if product.is_sale %}
-        <strike>
-            ${{ product.price }}
-        </strike>
-        &nbsp;
-        ${{ product.sale_price }}
+      <div class="row justify-content-center">
+        <div class="col-lg-10">
+          <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="row g-0">
+              <div class="col-md-5 bg-white">
+                <img src="{{ product.image.url }}" class="img-fluid h-100 w-100 object-fit-cover" alt="{{ product.name }}">
+              </div>
+              <div class="col-md-7">
+                <div class="card-body p-4 p-lg-5">
+                  <h3 class="card-title fw-bold mb-3">{{ product.name }}</h3>
+                  <p class="card-text text-muted mb-4">{{ product.description }}</p>
 
+                  {% if product.is_sale %}
+                  <div class="mb-4">
+                    <span class="text-muted text-decoration-line-through me-2">${{ product.price }}</span>
+                    <span class="fw-semibold text-success fs-5">${{ product.sale_price }}</span>
+                  </div>
+                  {% else%}
+                  <div class="mb-4">
+                    <span class="fw-semibold fs-5 text-secondary-emphasis">${{ product.price }}</span>
+                  </div>
+                  {% endif%}
 
-        {% else%}
-        ${{ product.price }}
-        {% endif%}
-        <br/><br/>
+                  <div class="row g-2 align-items-center mb-4">
+                    <div class="col-auto">
+                      <label for="qty-card" class="col-form-label fw-semibold">Quantity:</label>
+                    </div>
+                    <div class="col-4 col-sm-3">
+                      <select class="form-select form-select-sm" id="qty-card">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                      </select>
+                    </div>
+                  </div>
 
-        <div class="row justify-content-center">
-            <div class="col-md-2">Quantity:</div>
-            <div class="col-md-2">
-        <select class="form-select form-select-sm" id="qty-card">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-        </select>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <a class="btn btn-outline-dark" href="{% url 'home' %}">Home</a>
+                    <button class="btn btn-dark" type='button' id="add-to-cart" value="{{ product.id }}">Add to Cart</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        </div>
-
-        <br/><br/>
-        <a class="btn btn-secondary" href="{% url 'home' %}">Home</a>
-        <button class="btn btn-primary" type='button' id="add-to-cart" value="{{ product.id }}">Add to Cart</button>
-        <center/>
-    </div>
       </div>
     </div>
-  </div>
-</div>
-    </div>
-
-
-    <br/><br/><br/><br/><br/><br/><br/>
+  </section>
 
 
 <script>

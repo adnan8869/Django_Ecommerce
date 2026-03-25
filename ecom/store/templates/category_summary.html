@@ -1,30 +1,35 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <!-- Header-->
-    <header class="bg-dark py-5">
+    <header class="bg-white py-5 border-bottom shadow-sm">
         <div class="container px-4 px-lg-5 my-5">
-            <div class="text-center text-white">
-                <h1 class="display-4 fw-bolder">Category Summary</h1>
-                <p class="lead fw-normal text-white-50 mb-0">Welcome to the category summary section!</p>
+            <div class="text-center text-dark">
+                <span class="badge text-bg-dark rounded-pill px-3 py-2 mb-3">Browse</span>
+                <h1 class="display-5 fw-bold">Category Summary</h1>
+                <p class="lead text-muted mb-0">Explore all available product categories.</p>
             </div>
         </div>
     </header>
-    <!-- Section-->
-    <div class="container">
-        <div class="row">
-            <center>
-                <div class="col-8">
-                    <br/><br/>
-                    
-                    {% for category in categories %}
-                    <h3><a href="{% url 'category' category.name %}">{{ category }}</a></h3>
-                    {% endfor %}
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4 p-lg-5">
+                            <h2 class="h5 fw-semibold mb-4 text-center">Available Categories</h2>
 
-
-                    <br/><br/> <br/><br/> <br/><br/> <br/><br/> <br/><br/> <br/><br/> <br/><br/> <br/><br/> 
+                            <div class="list-group list-group-flush">
+                                {% for category in categories %}
+                                <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" href="{% url 'category' category.name %}">
+                                    <span class="fw-medium">{{ category }}</span>
+                                    <i class="bi bi-chevron-right text-muted"></i>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </center>
+            </div>
         </div>
-    </div>
+    </section>
 {% endblock %}

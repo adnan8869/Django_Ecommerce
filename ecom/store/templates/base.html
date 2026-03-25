@@ -16,13 +16,13 @@
         <link href="{% static 'css/styles.css' %}" rel="stylesheet" />
         <script src="https://code.jquery.com/jquery-4.0.0.min.js" integrity="sha256-OaVG6prZf4v69dPg6PhVattBXkcOWQB62pdZ3ORyrao=" crossorigin="anonymous"></script>
     </head>
-    <body class="d-flex flex-column min-vh-100">
+    <body class="d-flex flex-column min-vh-100 bg-body-tertiary">
         {% include 'navbar.html' %}
 
         {% if messages %}
             <div class="container mt-3">
                 {% for message in messages %}
-                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <div class="alert alert-light alert-dismissible fade show shadow-sm border" role="alert">
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
@@ -34,8 +34,8 @@
         {% endblock %}
 
         <!-- Footer-->
-        <footer class="mt-auto w-100 py-5 bg-dark">
-            <div class="container"><p class="m-0 text-center text-white">Copyright &copy; Ecommerce Website 2026</p></div>
+        <footer class="mt-auto w-100 py-4 bg-dark border-top border-secondary-subtle">
+            <div class="container"><p class="m-0 text-center text-white-50">Copyright &copy; Ecommerce Website 2026</p></div>
         </footer>
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>

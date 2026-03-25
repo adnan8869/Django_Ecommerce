@@ -1,47 +1,46 @@
 {% extends "base.html" %}
 {% block content %}
         <!-- Header-->
-        <header class="bg-dark py-5">
+        <header class="bg-white py-5 border-bottom shadow-sm">
             <div class="container px-4 px-lg-5 my-5">
-                <div class="text-center text-white">
-                    <h1 class="display-4 fw-bolder">Shopping Cart</h1>
-                    <p class="lead fw-normal text-white-50 mb-0">Review your items before checkout</p>
+                <div class="text-center text-dark">
+                    <span class="badge text-bg-dark rounded-pill px-3 py-2 mb-3">Order Summary</span>
+                    <h1 class="display-5 fw-bold">Shopping Cart</h1>
+                    <p class="lead text-muted mb-0">Review your items before checkout</p>
                 </div>
             </div>
         </header>
-        <br/>
+        <section class="py-5">
         <div class="container">
         {% if cart_products %}
             {% for product in  cart_products %}
 
-                    <div class="card mb-3">
+                    <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden">
   <div class="row g-0">
-    <div class="col-md-4">
-      <img src="{{ product.image.url }}" class="img-fluid rounded-start" alt="...">
+    <div class="col-md-4 bg-white">
+      <img src="{{ product.image.url }}" class="img-fluid h-100 w-100 object-fit-cover" alt="{{ product.name }}">
     </div>
     <div class="col-md-8">
-      <div class="card-body">
-        <center>
-        <h5 class="card-title">{{ product.name }}</h5>
-        <br/>
-        <p class="card-text">{{ product.description }}</p>
+      <div class="card-body p-4 p-lg-5">
+        <h5 class="card-title fw-bold mb-3">{{ product.name }}</h5>
+        <p class="card-text text-muted mb-4">{{ product.description }}</p>
         
         {% if product.is_sale %}
-        <strike>
-            ${{ product.price }}
-        </strike>
-        &nbsp;
-        ${{ product.sale_price }}
+        <div class="mb-4">
+            <span class="text-muted text-decoration-line-through me-2">${{ product.price }}</span>
+            <span class="fw-semibold text-success">${{ product.sale_price }}</span>
+        </div>
 
 
         {% else%}
-        ${{ product.price }}
+        <div class="mb-4">
+            <span class="fw-semibold text-secondary-emphasis">${{ product.price }}</span>
+        </div>
         {% endif%}
-        <br/><br/>
 
-        <div class="row justify-content-center">
-            <div class="col-md-2">Quantity:</div>
-            <div class="col-md-2">
+        <div class="row g-2 align-items-center mb-4">
+            <div class="col-auto"><label for="select{{ product.id }}" class="col-form-label fw-semibold">Quantity:</label></div>
+            <div class="col-4 col-sm-3">
         <select class="form-select form-select-sm" id="select{{ product.id }}">
         
             {%for key,value in quantities.items %}
@@ -59,27 +58,33 @@
         </div>
         </div>
 
-        <br/><br/>
-        <a class="btn btn-secondary" href="{% url 'home' %}">Home</a>
-        <button class="btn btn-secondary update-cart" type='button' data-index="{{ product.id }}">Update</button>
-        <button class="btn btn-danger delete-product" type='button' data-index="{{ product.id }}">Remove</button>
-
-        <center/>
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-outline-dark" href="{% url 'home' %}">Home</a>
+            <button class="btn btn-dark update-cart" type='button' data-index="{{ product.id }}">Update</button>
+            <button class="btn btn-outline-danger delete-product" type='button' data-index="{{ product.id }}">Remove</button>
+        </div>
     </div>
       </div>
     </div>
   </div>
             {% endfor %}
-            <br/><br/>
-            <h3>Total: ${{ totals }}</h3>
-            <br/><br/>
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2 p-4">
+                    <h3 class="h4 mb-0 fw-bold">Total: ${{ totals }}</h3>
+                    <span class="badge text-bg-dark rounded-pill px-3 py-2">Ready to review</span>
+                </div>
+            </div>
         {% else %}
-            <h3>Your cart is empty.</h3>
-            <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-5 text-center">
+                    <h3 class="h4 mb-2">Your cart is empty.</h3>
+                    <p class="text-muted mb-4">Add products to your cart to see them here.</p>
+                    <a class="btn btn-dark" href="{% url 'home' %}">Continue Shopping</a>
+                </div>
+            </div>
         {% endif %}
-        <div/>
-
-        <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+        </div>
+        </section>
        
 
 <script>
