@@ -4,9 +4,9 @@
         <header class="bg-white py-5 border-bottom shadow-sm">
             <div class="container px-4 px-lg-5 my-5">
                 <div class="text-center text-dark">
-                    <span class="badge text-bg-dark rounded-pill px-3 py-2 mb-3">Order Summary</span>
-                    <h1 class="display-5 fw-bold">Checkout</h1>
-                    <p class="lead text-muted mb-0">Review your items before placing your order</p>
+                    <span class="badge text-bg-dark rounded-pill px-3 py-2 mb-3">Payment</span>
+                    <h1 class="display-5 fw-bold">Billing Info</h1>
+                    <p class="lead text-muted mb-0">Review shipping details and enter payment information</p>
                 </div>
             </div>
         </header>
@@ -60,26 +60,42 @@
                         <div class="col-lg-6">
                             <div class="card border-0 shadow-sm rounded-4 mb-4">
                                 <div class="card-header bg-dark text-white border-0 rounded-top-4 py-3 px-4 fw-semibold">
-                                    Shipping Info
+                                    Shipping Details
                                 </div>
                                 <div class="card-body p-4 p-lg-5">
-                                    <form method="post" action="{% url 'billing_info' %}">
-                                        {% csrf_token %}
-                                    {{shipping_form.as_p}}
+                                    <ul class="list-group list-group-flush mb-4">
+                                        <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">Name</span><span class="fw-medium">{{shipping_info.shipping_full_name}}</span></li>
+                                        <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">Email</span><span class="fw-medium">{{shipping_info.shipping_email}}</span></li>
+                                        <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">Address 1</span><span class="fw-medium">{{shipping_info.shipping_address1}}</span></li>
+                                        <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">Address 2</span><span class="fw-medium">{{shipping_info.shipping_address2}}</span></li>
+                                        <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">City</span><span class="fw-medium">{{shipping_info.shipping_city}}</span></li>
+                                        <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">State</span><span class="fw-medium">{{shipping_info.shipping_state}}</span></li>
+                                        <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">Zip Code</span><span class="fw-medium">{{shipping_info.shipping_zip_code}}</span></li>
+                                        <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">Country</span><span class="fw-medium">{{shipping_info.shipping_country}}</span></li>
+                                    </ul>
                                     <div class="d-grid">
-                                        <button type="submit" class="btn btn-dark">Continue to Billing</button>
+                                        <a href="{% url 'checkout' %}" class="btn btn-outline-dark">Update Shipping</a>
                                     </div>
-                                    </form>
                                 </div>
                             </div>
+
+                            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                                <div class="card-header bg-dark text-white border-0 rounded-top-4 py-3 px-4 fw-semibold">
+                                    Payment Details
+                                </div>
+                                <div class="card-body p-4 p-lg-5">
+                                   {{billing_form.as_p}}
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <a href="#" class="btn btn-dark">Pay Now</a>
+                            </div>
+                        </div>
                         </div>
                     </div>
-                    </div>
-                    </div>
-       
+                </div>
+            </div>
         </div>
         </section>
-       
-
-
  {% endblock %}
