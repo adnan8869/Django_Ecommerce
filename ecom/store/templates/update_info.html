@@ -17,9 +17,15 @@
                     <div class="card border-0 shadow-sm rounded-4">
                         <div class="card-body p-4 p-lg-5">
                             <h2 class="h5 fw-semibold mb-4 text-center">Information Details</h2>
+                            <strong>Billing Information</strong>
+                            <br/><br/>
                             <form method="POST" action="{% url 'update_info'%}">
                                 {% csrf_token %}
                                 {{ form.as_p }}
+                                <br/><br/>
+                                <strong>Shipping Information</strong>
+                                <br/><br/>
+                                {{ shipping_form.as_p }}
 
                                 <div class="d-grid mt-3">
                                     <button type="submit" class="btn btn-dark btn-lg">Update Profile</button>
