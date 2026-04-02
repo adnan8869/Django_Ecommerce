@@ -5,6 +5,70 @@ from payment.models import ShippingAddress, Order, OrderItem
 from django.contrib.auth.models import User
 from django.contrib import messages
 from store.models import Product
+import datetime
+
+
+def orders(request, pk):
+    if request.user.is_authenticated and request.user.is_superuser:
+        order = Order.objects.get(id=pk)
+        items = OrderItem.objects.filter(order_id=pk).select_related('product')
+        if request.POST:
+            status = request.POST.get('shipping_status')
+            if status == 'true':
+                order = Order.objects.filter(id=pk)
+                now = datetime.datetime.now()
+                order.update(shipped=True, date_shipped=now)
+            else:
+                order = Order.objects.filter(id=pk)
+                order.update(shipped=False)
+            messages.success(request, 'Shipping status updated.')
+            return redirect('home')
+        return render(request, 'payment/orders.html',
+                      {"order": order, "items": items})
+    else:
+        messages.error(
+            request,
+            'You do not have permission to access this page.')
+        return redirect('home')
+
+
+def not_shipped_dash(request):
+    if request.user.is_authenticated and request.user.is_superuser:
+        orders = Order.objects.filter(shipped=False)
+        if request.POST:
+            status = request.POST.get('shipping_status')
+            num = request.POST.get('num')
+            order = Order.objects.filter(id=num)
+            now = datetime.datetime.now()
+            order.update(shipped=True, date_shipped=now)
+            messages.success(request, 'Shipping status updated.')
+            return redirect('home')
+        return render(request, 'payment/not_shipped_dash.html',
+                      {"orders": orders})
+    else:
+        messages.error(
+            request,
+            'You do not have permission to access this page.')
+        return redirect('home')
+
+
+def shipped_dash(request):
+    if request.user.is_authenticated and request.user.is_superuser:
+        orders = Order.objects.filter(shipped=True)
+        if request.POST:
+            status = request.POST.get('shipping_status')
+            num = request.POST.get('num')
+            order = Order.objects.filter(id=num)
+            now = datetime.datetime.now()
+            order.update(shipped=False)
+            messages.success(request, 'Shipping status updated.')
+            return redirect('home')
+        return render(request, 'payment/shipped_dash.html', {"orders": orders})
+    else:
+        messages.error(
+            request,
+            'You do not have permission to access this page.')
+        return redirect('home')
 
 
 def process_order(request):
@@ -13,6 +77,9 @@ def process_order(request):
         cart_products = cart.get_prods()
         quantities = cart.get_quants()
         totals = cart.cart_total()
+        if not cart_products:
+            messages.error(request, 'Your cart is empty.')
+            return redirect('cart_summary')
         # Get billing from the last page
         payment_form = PaymentForm(request.POST or None)
         # Get shipping info from session
@@ -35,22 +102,29 @@ def process_order(request):
         # Add orders items
         # Order id, Product id, quantity, price
             order_id = create_order.id
+            created_items = 0
             for product in cart_products:
                 product_id = product.id
                 if product.is_sale:
                     price = product.sale_price
                 else:
                     price = product.price
-                for key, value in quantities.items():
-                    if int(key) == product_id:
-                        quantity = value
-                        create_order_item = OrderItem(
-                            order_id=order_id,
-                            product_id=product_id,
-                            user=user,
-                            quantity=value,
-                            price=price)
-                        create_order_item.save()
+                quantity = quantities.get(str(product_id))
+                if quantity:
+                    create_order_item = OrderItem(
+                        order_id=order_id,
+                        product_id=product_id,
+                        user=user,
+                        quantity=quantity,
+                        price=price)
+                    create_order_item.save()
+                    created_items += 1
+
+            if created_items == 0:
+                create_order.delete()
+                messages.error(
+                    request, 'No order items were created. Please try checkout again.')
+                return redirect('cart_summary')
             # Delete cart
             request.session.pop('session_key', None)
 
@@ -64,21 +138,28 @@ def process_order(request):
                 amount_paid=amount_paid)
             create_order.save()
             order_id = create_order.id
+            created_items = 0
             for product in cart_products:
                 product_id = product.id
                 if product.is_sale:
                     price = product.sale_price
                 else:
                     price = product.price
-                for key, value in quantities.items():
-                    if int(key) == product_id:
-                        quantity = value
-                        create_order_item = OrderItem(
-                            order_id=order_id,
-                            product_id=product_id,
-                            quantity=value,
-                            price=price)
-                        create_order_item.save()
+                quantity = quantities.get(str(product_id))
+                if quantity:
+                    create_order_item = OrderItem(
+                        order_id=order_id,
+                        product_id=product_id,
+                        quantity=quantity,
+                        price=price)
+                    create_order_item.save()
+                    created_items += 1
+
+            if created_items == 0:
+                create_order.delete()
+                messages.error(
+                    request, 'No order items were created. Please try checkout again.')
+                return redirect('cart_summary')
             # Delete cart
             request.session.pop('session_key', None)
             messages.success(request, 'Order processed successfully!')

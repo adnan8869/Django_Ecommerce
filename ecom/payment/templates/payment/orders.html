@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <header class="bg-white py-3 border-bottom shadow-sm">
+        <div class="container px-4 px-lg-5 my-2">
+            <div class="text-center text-dark">
+                <span class="badge text-bg-dark rounded-pill px-3 py-2 mb-3">Order Management</span>
+                <h1 class="display-6 fw-bold">Order #{{ order.id }}</h1>
+                <p class="lead text-muted mb-0">Review order details and update shipping status</p>
+            </div>
+        </div>
+    </header>
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-xl-10">
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4 p-lg-5">
+                            <div class="row g-4">
+                                <div class="col-lg-6">
+                                    <div class="card border rounded-4 h-100">
+                                        <div class="card-header bg-dark text-white fw-semibold">Order Details</div>
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <span class="text-muted">Order Amount</span>
+                                                <span class="fw-bold">${{ order.amount_paid }}</span>
+                                            </div>
+                                            <p class="mb-2"><span class="text-muted">Email:</span> {{ order.email }}</p>
+                                            {% if order.date_shipped %}
+                                                <p class="mb-2"><span class="text-muted">Date Shipped:</span> {{ order.date_shipped }}</p>
+                                            {% else %}
+                                                <p class="mb-2"><span class="text-muted">Date Ordered:</span> {{ order.date_ordered }}</p>
+                                            {% endif %}
+                                            <p class="mb-2"><span class="text-muted">Customer:</span> {{order.full_name}}</p>
+                                            <p class="mb-0"><span class="text-muted">Shipping Address:</span></p>
+                                            <div class="border rounded-3 bg-light p-3 mt-2 mb-0" style="white-space: pre-wrap;">{{order.shipping_address}}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-6">
+                                    <div class="card border rounded-4 mb-4">
+                                        <div class="card-header bg-dark text-white fw-semibold">Order Items</div>
+                                        <div class="card-body">
+                                            {% if items %}
+                                                <ul class="list-group list-group-flush">
+                                                    {% for item in items %}
+                                                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                                        <span>{{item.product}} <span class="text-muted">x{{item.quantity}}</span></span>
+                                                        <span class="fw-semibold">${{item.price}}</span>
+                                                    </li>
+                                                    {% endfor%}
+                                                </ul>
+                                            {% else %}
+                                                <div class="alert alert-light border mb-0" role="alert">
+                                                    No items found for this order.
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="card border rounded-4">
+                                        <div class="card-header bg-dark text-white fw-semibold">Shipping Status</div>
+                                        <div class="card-body">
+                                            {% if not order.shipped %}
+                                            <form method="POST" class="d-grid">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="shipping_status" value="true">
+                                                <button type="submit" class="btn btn-success">Mark as Shipped</button>
+                                            </form>
+                                            {% else %}
+                                            <form method="POST" class="d-grid">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="shipping_status" value="false">
+                                                <button type="submit" class="btn btn-outline-warning">Mark as Not Shipped</button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
