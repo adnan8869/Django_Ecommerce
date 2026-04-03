@@ -6,7 +6,7 @@
             <div class="text-center text-dark">
                 <span class="badge text-bg-dark rounded-pill px-3 py-2 mb-3">Order Management</span>
                 <h1 class="display-6 fw-bold">Order #{{ order.id }}</h1>
-                <p class="lead text-muted mb-0">Review order details and update shipping status</p>
+                <p class="lead text-muted mb-0">Review order details and update payment and shipping status</p>
             </div>
         </div>
     </header>
@@ -30,6 +30,23 @@
                                                 <p class="mb-2"><span class="text-muted">Date Shipped:</span> {{ order.date_shipped }}</p>
                                             {% else %}
                                                 <p class="mb-2"><span class="text-muted">Date Ordered:</span> {{ order.date_ordered }}</p>
+                                            {% endif %}
+                                            <p class="mb-2">
+                                                <span class="text-muted">Payment Status:</span>
+                                                {% if order.payment_status == 'paid' %}
+                                                <span class="badge text-bg-success">Paid</span>
+                                                {% elif order.payment_status == 'failed' %}
+                                                <span class="badge text-bg-danger">Failed</span>
+                                                {% elif order.payment_status == 'refunded' %}
+                                                <span class="badge text-bg-secondary">Refunded</span>
+                                                {% elif order.payment_status == 'partially_refunded' %}
+                                                <span class="badge text-bg-info">Partially Refunded</span>
+                                                {% else %}
+                                                <span class="badge text-bg-warning">Pending</span>
+                                                {% endif %}
+                                            </p>
+                                            {% if order.date_paid %}
+                                            <p class="mb-2"><span class="text-muted">Date Paid:</span> {{ order.date_paid }}</p>
                                             {% endif %}
                                             <p class="mb-2"><span class="text-muted">Customer:</span> {{order.full_name}}</p>
                                             <p class="mb-0"><span class="text-muted">Shipping Address:</span></p>
@@ -73,6 +90,25 @@
                                                 {% csrf_token %}
                                                 <input type="hidden" name="shipping_status" value="false">
                                                 <button type="submit" class="btn btn-outline-warning">Mark as Not Shipped</button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="card border rounded-4 mt-4">
+                                        <div class="card-header bg-dark text-white fw-semibold">Payment Status</div>
+                                        <div class="card-body">
+                                            {% if not order.is_paid %}
+                                            <form method="POST" class="d-grid">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="payment_status" value="true">
+                                                <button type="submit" class="btn btn-success">Mark as Paid</button>
+                                            </form>
+                                            {% else %}
+                                            <form method="POST" class="d-grid">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="payment_status" value="false">
+                                                <button type="submit" class="btn btn-outline-warning">Mark as Payment Pending</button>
                                             </form>
                                             {% endif %}
                                         </div>

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <header class="bg-white py-3 border-bottom shadow-sm">
+    <div class="container px-4 px-lg-5 my-2">
+      <div class="text-center text-dark">
+        <span class="badge text-bg-dark rounded-pill px-3 py-2 mb-3">Admin Dashboard</span>
+        <h1 class="display-6 fw-bold">Paid Orders</h1>
+        <p class="lead text-muted mb-0">Review orders that have confirmed payment</p>
+      </div>
+    </div>
+  </header>
+  <section class="py-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-xl-10">
+          <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4 p-lg-5">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                <h3 class="h4 fw-bold mb-0">Paid Items</h3>
+                <span class="badge text-bg-secondary rounded-pill px-3 py-2">{{ orders|length }} Orders</span>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="table-dark">
+                    <tr>
+                      <th scope="col">Order</th>
+                      <th scope="col">Price</th>
+                      <th scope="col">Customer Email</th>
+                      <th scope="col">Date Paid</th>
+                      <th scope="col" class="text-end">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for item in orders %}
+                    <tr>
+                      <td><a class="fw-semibold text-decoration-none" href="{% url 'orders' item.id %}">#{{ item.id }}</a></td>
+                      <td class="fw-semibold">${{ item.amount_paid }}</td>
+                      <td>{{ item.email }}</td>
+                      <td>{{ item.date_paid|default:item.date_ordered }}</td>
+                      <td class="text-end">
+                        <form method="POST">
+                          {% csrf_token %}
+                          <input type="hidden" name="payment_status" value="false">
+                          <input type="hidden" name="num" value="{{ item.id }}">
+                          <button type="submit" class="btn btn-outline-danger btn-sm">Mark as Pending</button>
+                        </form>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

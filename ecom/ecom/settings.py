@@ -4,6 +4,23 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def _load_env_file(env_path):
+    if not env_path.exists():
+        return
+
+    with open(env_path, encoding='utf-8') as env_file:
+        for line in env_file:
+            stripped = line.strip()
+            if not stripped or stripped.startswith('#') or '=' not in stripped:
+                continue
+            key, value = stripped.split('=', 1)
+            cleaned_value = value.strip().strip('"').strip("'")
+            os.environ.setdefault(key.strip(), cleaned_value)
+
+
+_load_env_file(BASE_DIR / '.env')
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -14,6 +31,10 @@ SECRET_KEY = 'django-insecure-$t4xrj&9+mr27lm*=(+p02sk4#vokb(u=4vfm!9_9-@9!+l7f9
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', '')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
 
 
 # Application definition
@@ -52,7 +73,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'cart.context_processors.cart',  
+                'cart.context_processors.cart',
             ],
         },
     },

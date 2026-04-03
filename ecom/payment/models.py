@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from store.models import Product
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-import datetime 
+from django.utils import timezone
 
 
 class ShippingAddress(models.Model):
@@ -36,7 +36,15 @@ def create_shipping(sender, instance, created, **kwargs):
 
 post_save.connect(create_shipping, sender=User)
 
+
 class Order(models.Model):
+    class PaymentStatus(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        PAID = 'paid', 'Paid'
+        FAILED = 'failed', 'Failed'
+        REFUNDED = 'refunded', 'Refunded'
+        PARTIALLY_REFUNDED = 'partially_refunded', 'Partially Refunded'
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -47,19 +55,62 @@ class Order(models.Model):
     shipping_address = models.TextField(max_length=750)
     amount_paid = models.DecimalField(max_digits=7, decimal_places=2)
     date_ordered = models.DateTimeField(auto_now_add=True)
+    is_paid = models.BooleanField(default=False)
+    payment_status = models.CharField(
+        max_length=32,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.PENDING,
+    )
+    date_paid = models.DateTimeField(null=True, blank=True)
+    stripe_checkout_session_id = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    stripe_payment_intent_id = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        db_index=True,
+    )
     shipped = models.BooleanField(default=False)
     date_shipped = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f'Order - {str(self.id)}'
 # Auto add shipping date
+
+
 @receiver(pre_save, sender=Order)
 def set_shipped_date_on_update(sender, instance, **kwargs):
     if instance.pk:
-        now = datetime.datetime.now()
+        now = timezone.now()
         obj = sender._default_manager.get(pk=instance.pk)
+
+        if instance.payment_status == Order.PaymentStatus.PAID and not instance.is_paid:
+            instance.is_paid = True
+        elif instance.payment_status in [
+                Order.PaymentStatus.PENDING,
+                Order.PaymentStatus.FAILED,
+                Order.PaymentStatus.REFUNDED] and instance.is_paid:
+            instance.is_paid = False
+
+        if instance.is_paid and instance.payment_status in [
+                Order.PaymentStatus.PENDING,
+                Order.PaymentStatus.FAILED]:
+            instance.payment_status = Order.PaymentStatus.PAID
+
         if instance.shipped and not obj.shipped:
             instance.date_shipped = now
+        elif not instance.shipped and obj.shipped:
+            instance.date_shipped = None
+
+        if instance.is_paid and not obj.is_paid:
+            instance.date_paid = now
+        elif not instance.is_paid and obj.is_paid:
+            instance.date_paid = None
+
 
 class OrderItem(models.Model):
     order = models.ForeignKey(

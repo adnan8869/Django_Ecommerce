@@ -1,1 +1,21 @@
-hello paymet is done
+{% extends "base.html" %}
+{% block content %}
+<section class="py-5">
+	<div class="container px-4 px-lg-5">
+		<div class="row justify-content-center">
+			<div class="col-lg-7">
+				<div class="card border-0 shadow-sm rounded-4 text-center p-4 p-lg-5">
+					<h1 class="h3 fw-bold mb-3">Payment Successful</h1>
+					<p class="text-muted mb-4">
+						Your Stripe payment has been confirmed and your order was placed successfully.
+					</p>
+					<div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+						<a href="{% url 'home' %}" class="btn btn-dark">Continue Shopping</a>
+						<a href="{% url 'cart_summary' %}" class="btn btn-outline-dark">View Cart</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+{% endblock %}
