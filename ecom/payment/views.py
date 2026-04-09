@@ -9,8 +9,15 @@ from payment.models import ShippingAddress, Order, OrderItem
 from django.contrib import messages
 from store.models import Profile
 from decimal import Decimal, ROUND_HALF_UP
+import json
 import datetime
+import logging
+import urllib.error
+import urllib.request
 import stripe
+
+
+logger = logging.getLogger(__name__)
 
 
 def _build_shipping_payload(post_data):
@@ -58,6 +65,76 @@ def _update_order_payment_state(
     if stripe_payment_intent_id:
         order.stripe_payment_intent_id = stripe_payment_intent_id
     order.save()
+
+
+def _send_payment_confirmation_email(order):
+    api_key = settings.SENDGRID_API_KEY
+    sender_email = settings.PAYMENT_SENDER_EMAIL
+    recipient_email = (order.email or '').strip()
+
+    if not api_key or not sender_email or not recipient_email:
+        missing = []
+        if not api_key:
+            missing.append('SENDGRID_API_KEY')
+        if not sender_email:
+            missing.append('PAYMENT_SENDER_EMAIL')
+        if not recipient_email:
+            missing.append('customer email')
+        return False, f"Missing: {', '.join(missing)}"
+
+    subject = f'Payment Confirmation - Order #{order.id}'
+    order_date = order.date_ordered.strftime('%Y-%m-%d %H:%M UTC')
+    message = (
+        f'Hi {order.full_name},\n\n'
+        f'We have received your payment successfully.\n'
+        f'Order ID: {order.id}\n'
+        f'Amount Paid: ${order.amount_paid}\n'
+        f'Order Date: {order_date}\n\n'
+        f'Thank you for shopping with us.'
+    )
+
+    personalizations = [{'to': [{'email': recipient_email}]}]
+    if settings.PAYMENT_ADMIN_EMAIL:
+        personalizations[0]['bcc'] = [{'email': settings.PAYMENT_ADMIN_EMAIL}]
+
+    payload = {
+        'personalizations': personalizations,
+        'from': {'email': sender_email},
+        'subject': subject,
+        'content': [{'type': 'text/plain', 'value': message}],
+    }
+
+    req = urllib.request.Request(
+        'https://api.sendgrid.com/v3/mail/send',
+        data=json.dumps(payload).encode('utf-8'),
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json',
+        },
+        method='POST',
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            if response.status == 202:
+                return True, ''
+            return False, f'SendGrid status {response.status}'
+    except urllib.error.HTTPError as exc:
+        raw_error = exc.read().decode('utf-8', errors='ignore')
+        logger.warning('SendGrid HTTPError %s: %s', exc.code, raw_error)
+        if exc.code == 401:
+            return False, 'Invalid SendGrid API key (401).'
+        if exc.code == 403:
+            return False, (
+                'Sender email is not verified in SendGrid (403).'
+            )
+        return False, f'SendGrid HTTP {exc.code}'
+    except urllib.error.URLError as exc:
+        logger.warning('SendGrid URLError: %s', exc)
+        return False, 'Network error while contacting SendGrid.'
+    except TimeoutError:
+        logger.warning('SendGrid request timed out')
+        return False, 'SendGrid request timed out.'
 
 
 def _create_order_from_current_cart(
@@ -312,6 +389,10 @@ def not_paid_dash(request):
 
 
 def process_order(request):
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in to place your order.')
+        return redirect('login')
+
     if request.POST:
         if _create_order_from_current_cart(
                 request,
@@ -327,6 +408,10 @@ def process_order(request):
 
 
 def create_checkout_session(request):
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in to continue to checkout.')
+        return redirect('login')
+
     if request.method != 'POST':
         messages.error(request, 'Invalid request method.')
         return redirect('checkout')
@@ -423,6 +508,10 @@ def create_checkout_session(request):
 
 
 def checkout(request):
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in to access checkout.')
+        return redirect('login')
+
     cart = Cart(request)
     cart_products = cart.get_prods()
     quantities = cart.get_quants()
@@ -508,6 +597,12 @@ def payment_success(request):
             return redirect('cart_summary')
 
     _clear_cart_after_payment(request)
+    email_sent, email_error = _send_payment_confirmation_email(order)
+    if not email_sent:
+        warning_text = 'Payment completed, but confirmation email could not be sent.'
+        if settings.DEBUG and email_error:
+            warning_text = f'{warning_text} Reason: {email_error}'
+        messages.warning(request, warning_text)
     request.session['stripe_last_session_id'] = session_id
     return render(request, 'payment/payment_success.html', {})
 
