@@ -58,7 +58,7 @@ PAYMENT_ADMIN_EMAIL = os.getenv('PAYMENT_ADMIN_EMAIL', '')
 
 # Application definition
 
-SITE_ID = int(os.getenv('SITE_ID', '1'))
+SITE_ID = 2
 
 INSTALLED_APPS = [
     'django.contrib.admin',
