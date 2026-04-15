@@ -129,7 +129,7 @@ WSGI_APPLICATION = 'ecom.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# https://docs.djangoproject.com/en/5.2/ref/settings/
 
 database_url = os.getenv('DATABASE_URL')
 if database_url:
