@@ -67,6 +67,55 @@ def _update_order_payment_state(
     order.save()
 
 
+def _resolve_order_from_stripe_object(stripe_object):
+    metadata = _safe_stripe_attr(stripe_object, 'metadata', {})
+    metadata_order_id = _safe_stripe_attr(metadata, 'order_id')
+    if metadata_order_id:
+        order = Order.objects.filter(id=metadata_order_id).first()
+        if order:
+            return order
+
+    stripe_payment_intent_id = str(_safe_stripe_attr(stripe_object, 'id', '') or '')
+    if stripe_payment_intent_id:
+        order = Order.objects.filter(
+            stripe_payment_intent_id=stripe_payment_intent_id,
+        ).first()
+        if order:
+            return order
+
+    return None
+
+
+def _mark_order_paid_idempotent(order, *, stripe_payment_intent_id=''):
+    # Stripe can redeliver the same event, so repeated paid updates must be no-ops.
+    if order.is_paid and order.payment_status == Order.PaymentStatus.PAID:
+        return
+
+    _update_order_payment_state(
+        order,
+        is_paid=True,
+        payment_status=Order.PaymentStatus.PAID,
+        stripe_payment_intent_id=stripe_payment_intent_id,
+    )
+
+
+def _mark_order_failed_idempotent(order, *, stripe_payment_intent_id=''):
+    # Never downgrade a settled payment because of late/duplicate failed events.
+    if order.is_paid and order.payment_status == Order.PaymentStatus.PAID:
+        return
+
+    if (not order.is_paid and
+            order.payment_status == Order.PaymentStatus.FAILED):
+        return
+
+    _update_order_payment_state(
+        order,
+        is_paid=False,
+        payment_status=Order.PaymentStatus.FAILED,
+        stripe_payment_intent_id=stripe_payment_intent_id,
+    )
+
+
 def _send_payment_confirmation_email(order):
     api_key = settings.SENDGRID_API_KEY
     sender_email = settings.PAYMENT_SENDER_EMAIL
@@ -486,6 +535,9 @@ def create_checkout_session(request):
             line_items=line_items,
             customer_email=shipping_info.get('shipping_email', ''),
             metadata={'order_id': str(pending_order.id)},
+            payment_intent_data={
+                'metadata': {'order_id': str(pending_order.id)}
+            },
             client_reference_id=str(pending_order.id),
             success_url=success_url,
             cancel_url=cancel_url,
@@ -631,7 +683,25 @@ def stripe_webhook(request):
     event_data = _safe_stripe_attr(event, 'data', {})
     data = _safe_stripe_attr(event_data, 'object', {})
 
-    if event_type == 'checkout.session.completed':
+    if event_type == 'payment_intent.succeeded':
+        payment_intent_id = str(_safe_stripe_attr(data, 'id', '') or '')
+        order = _resolve_order_from_stripe_object(data)
+        if order:
+            _mark_order_paid_idempotent(
+                order,
+                stripe_payment_intent_id=payment_intent_id,
+            )
+
+    elif event_type == 'payment_intent.payment_failed':
+        payment_intent_id = str(_safe_stripe_attr(data, 'id', '') or '')
+        order = _resolve_order_from_stripe_object(data)
+        if order:
+            _mark_order_failed_idempotent(
+                order,
+                stripe_payment_intent_id=payment_intent_id,
+            )
+
+    elif event_type == 'checkout.session.completed':
         session_id = _safe_stripe_attr(data, 'id')
         payment_intent_id = str(
             _safe_stripe_attr(
@@ -667,18 +737,6 @@ def stripe_webhook(request):
                 is_paid=False,
                 payment_status=Order.PaymentStatus.FAILED,
                 stripe_checkout_session_id=session_id,
-            )
-
-    elif event_type == 'payment_intent.payment_failed':
-        payment_intent_id = str(_safe_stripe_attr(data, 'id', '') or '')
-        order = Order.objects.filter(
-            stripe_payment_intent_id=payment_intent_id).first()
-        if order:
-            _update_order_payment_state(
-                order,
-                is_paid=False,
-                payment_status=Order.PaymentStatus.FAILED,
-                stripe_payment_intent_id=payment_intent_id,
             )
 
     elif event_type == 'charge.refunded':
