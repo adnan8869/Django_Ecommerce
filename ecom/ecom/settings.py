@@ -48,6 +48,18 @@ render_origin = f"https://{render_hostname}" if render_hostname else ''
 if render_origin and render_origin not in CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS.append(render_origin)
 
+# Local development convenience for changing ngrok URLs.
+if DEBUG:
+    if '.ngrok-free.dev' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append('.ngrok-free.dev')
+    if '.ngrok.io' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append('.ngrok.io')
+
+    if 'https://*.ngrok-free.dev' not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append('https://*.ngrok-free.dev')
+    if 'https://*.ngrok.io' not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append('https://*.ngrok.io')
+
 STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', '')
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
